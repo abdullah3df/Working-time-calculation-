@@ -19,22 +19,30 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,"Noto 
 
 /* Modals */ .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:16px} .modal.open{display:flex} .dialog{background:var(--card);border:1px solid var(--line);border-radius:16px;max-width:860px;width:100%;padding:16px;max-height:85vh;overflow:auto} .dialog h2{margin:0 0 10px;font-size:18px} .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px} .table{width:100%;border-collapse:separate;border-spacing:0 8px} thead th{font-size:12px;color:#334155} th,td{padding:8px 10px;text-align:center} tbody tr{background:#fff;border:1px solid var(--line)} .dark tbody tr{background:#0a1222;border-color:#1f2b40} tbody td:first-child, thead th:first-child{border-radius:10px 0 0 10px} tbody td:last-child, thead th:last-child{border-radius:0 10px 10px 0}
 
-/* Flags UI */ .lang-flags{display:flex;gap:6px;align-items:center} .btn-flag{width:36px;height:36px;padding:0;font-size:18px;line-height:1;border-radius:10px} .btn-flag.active{outline:2px solid var(--accent)} </style>
+/* Flags UI / .lang-flags{display:flex;gap:6px;align-items:center} .btn-flag{width:36px;height:36px;padding:0;font-size:18px;line-height:1;border-radius:10px} .btn-flag.active{outline:2px solid var(--accent)} / Collapsible menu styles */ .menu-panel{position:sticky;top:52px;z-index:19;background:#ffffff; border-bottom:1px solid var(--line); max-height:0; overflow:hidden; transition:max-height .25s ease;} .dark .menu-panel{background:#0e1528} .menu-panel.open{max-height:140px} .menu-inner{max-width:1060px;margin:0 auto;padding:10px 12px;display:flex;flex-direction:column;gap:10px} .menu-row{display:flex;gap:8px;flex-wrap:wrap} </style>
 
 </head>
 <body><!-- Topbar --><div class="topbar">
   <div class="inner">
     <div class="brand">⏱️ <span id="brandTxt">ساعتي</span></div>
-    <button id="navDay"      class="btn-sm">اليوم</button>
-    <button id="navMonth"    class="btn-sm">الشهري</button>
-    <button id="navSettings" class="btn-sm">الإعدادات</button>
-    <button id="navExport"   class="btn-sm">📦 تصدير</button>
-    <div class="lang-flags">
-      <button class="btn-sm btn-flag" data-lang="ar" title="العربية">🇸🇦</button>
-      <button class="btn-sm btn-flag" data-lang="en" title="English">🇬🇧</button>
-      <button class="btn-sm btn-flag" data-lang="de" title="Deutsch">🇩🇪</button>
+    <button id="menuToggle" class="btn-sm">☰ القائمة</button>
+  </div>
+</div><!-- Collapsible Menu Panel --><div id="menuPanel" class="menu-panel" aria-hidden="true">
+  <div class="menu-inner">
+    <div class="menu-row">
+      <button id="mnuDay" class="btn-sm">اليوم</button>
+      <button id="mnuMonth" class="btn-sm">الشهري</button>
+      <button id="mnuSettings" class="btn-sm">الإعدادات</button>
+      <button id="mnuExport" class="btn-sm">📦 تصدير</button>
     </div>
-    <button id="themeBtn"    class="btn-sm">Dark</button>
+    <div class="menu-row">
+      <div class="lang-flags">
+        <button class="btn-sm btn-flag" data-lang="ar" title="العربية">🇸🇦</button>
+        <button class="btn-sm btn-flag" data-lang="en" title="English">🇬🇧</button>
+        <button class="btn-sm btn-flag" data-lang="de" title="Deutsch">🇩🇪</button>
+      </div>
+      <button id="mnuTheme" class="btn-sm">Dark</button>
+    </div>
   </div>
 </div><div class="wrap">
   <!-- Day card -->
@@ -139,8 +147,8 @@ function setActiveLangUI(lang){ document.querySelectorAll('.btn-flag').forEach(b
 function setLang(lang){
   currentLang = lang;
   const L=I18N[lang]||I18N.ar; document.documentElement.lang=lang; document.documentElement.dir=L.dir; document.body.dir=L.dir;
-  brandTxt.textContent=L.brand; navDay.textContent=L.nav.day; navMonth.textContent=L.nav.month; navSettings.textContent=L.nav.settings; navExport.textContent = `${L.flag||''} ${L.nav.export}`.trim();
-  themeBtn.textContent = (document.body.classList.contains('dark')? L.themeDark : L.themeLight);
+  brandTxt.textContent=L.brand; mnuDay.textContent=L.nav.day; mnuMonth.textContent=L.nav.month; mnuSettings.textContent=L.nav.settings; mnuExport.textContent = `${L.flag||''} ${L.nav.export}`.trim();
+  setThemeLabel();
   titleDay.textContent=L.day.title; hintDay.textContent=L.day.hint; lblDate.textContent=L.day.date; lblStart.textContent=L.day.start; lblEnd.textContent=L.day.end; lblBreak.textContent=L.day.break; k1.textContent=L.day.k1; k2.textContent=L.day.k2; k3.textContent=L.day.k3; k4.textContent=L.day.k4;
   titleSettings.textContent=L.settings.title; hintSettings.textContent=L.settings.hint; lblDaily.textContent=L.settings.daily; lblBreakDef.textContent=L.settings.brdef; applySettings.textContent=L.settings.apply;
   titleMonth.textContent=L.month.title; lblPickMonth.textContent=L.month.pick; mk1.textContent=L.month.m1; mk2.textContent=L.month.m2; mk3.textContent=L.month.m3; refreshMonth.textContent=L.month.refresh; closeMonth.textContent=L.month.close;
@@ -155,11 +163,14 @@ function setLang(lang){
 function buildMonthTableHead(lang){ const L=I18N[lang]; const thead = monthArea.querySelector('thead'); if(thead){ thead.innerHTML = `<tr>${L.month.thead.map(h=>`<th>${h}</th>`).join('')}</tr>`; } }
 
 // Refs
-const themeBtn=document.getElementById('themeBtn');
-const navDay=document.getElementById('navDay');
-const navMonth=document.getElementById('navMonth');
-const navSettings=document.getElementById('navSettings');
-const navExport=document.getElementById('navExport');
+const menuToggle=document.getElementById('menuToggle');
+const menuPanel=document.getElementById('menuPanel');
+const mnuDay=document.getElementById('mnuDay');
+const mnuMonth=document.getElementById('mnuMonth');
+const mnuSettings=document.getElementById('mnuSettings');
+const mnuExport=document.getElementById('mnuExport');
+const mnuTheme=document.getElementById('mnuTheme');
+const brandTxt=document.getElementById('brandTxt');
 const brandTxt=document.getElementById('brandTxt');
 // Headings & labels (explicit refs)
 const titleDay=document.getElementById('titleDay');
@@ -218,7 +229,8 @@ const closeExport=document.getElementById('closeExport');
 const doExport=document.getElementById('doExport');
 
 // Theme
-themeBtn.onclick=()=>{ const L=I18N[getLang()]; document.body.classList.toggle('dark'); themeBtn.textContent = (document.body.classList.contains('dark')? L.themeDark : L.themeLight); };
+function setThemeLabel(){ const L=I18N[getLang()]; mnuTheme.textContent = (document.body.classList.contains('dark')? L.themeDark : L.themeLight); }
+mnuTheme.onclick=()=>{ document.body.classList.toggle('dark'); setThemeLabel(); };
 
 // Utils
 function h2m(h){ if(!h) return 0; const [H,M]=h.split(':').map(Number); return H*60+(M||0); }
@@ -250,11 +262,15 @@ function exportMonthJSON(){ refreshMonthSummary(); const month=monthPick.value |
 // Navigation
 function showCard(card){ [dayCard, settingsCard].forEach(el=> el.style.display='none'); card.style.display='block'; }
 function openExport(){ exportModal.classList.add('open'); exportModal.setAttribute('aria-hidden','false'); }
-navDay.onclick=()=> showCard(dayCard);
-navSettings.onclick=()=>{ loadSettings(); showCard(settingsCard); };
-navMonth.onclick=()=> openMonth();
-navExport.onclick=()=> openExport();
+menuToggle.onclick=()=>{ const open = menuPanel.classList.toggle('open'); menuPanel.setAttribute('aria-hidden', String(!open)); };
+
+mnuDay.onclick=()=>{ showCard(dayCard); menuPanel.classList.remove('open'); };
+mnuSettings.onclick=()=>{ loadSettings(); showCard(settingsCard); menuPanel.classList.remove('open'); };
+mnuMonth.onclick=()=>{ openMonth(); menuPanel.classList.remove('open'); };
+mnuExport.onclick=()=>{ openExport(); menuPanel.classList.remove('open'); };
 document.querySelectorAll('.btn-flag').forEach(btn=> btn.addEventListener('click', ()=>{ setLang(btn.dataset.lang); }));
+// Close menu on outside click
+window.addEventListener('click', (e)=>{ if(!menuPanel.contains(e.target) && !menuToggle.contains(e.target)){ menuPanel.classList.remove('open'); }});
 
 // Auto compute + auto save
 function autoComputeAndMaybeSave(e){ compute(); if(e && (e.target===dayEnd || e.target===dayBreak)){ saveDayLocal(); } }
@@ -271,9 +287,9 @@ doExport.addEventListener('click', ()=>{ if(expScope.value==='day'){ expFormat.v
 function initApp(){
   // language UI state
   setActiveLangUI(currentLang);
-  // set today first (so day name renders correctly)
+  // set today first
   dayDate.value = new Date().toISOString().slice(0,10);
-  // apply language & render
+  // i18n & values
   setLang(currentLang);
   loadSettings();
   loadDay();
