@@ -242,7 +242,12 @@ function loadSettings(){ const s=JSON.parse(localStorage.getItem('settings')||'{
 function saveSettings(){ const s={ daily:parseFloat(stDaily.value||8), break:parseInt(stBreak.value||30,10) }; localStorage.setItem('settings',JSON.stringify(s)); dBase.textContent=String(s.daily); notifySaved(); }
 
 // Day
-function updateDayName(){ const lang=getLang(); try{ dayName.textContent=dayNameIntl(new Date(dayDate.value), lang); }catch{ dayName.textContent='—'; } }
+function updateDayName(){
+  const lang=getLang();
+  if(!dayDate.value){ dayDate.value = new Date().toISOString().slice(0,10); }
+  try{ dayName.textContent=dayNameIntl(new Date(dayDate.value), lang); }
+  catch{ dayName.textContent='—'; }
+}{ const lang=getLang(); try{ dayName.textContent=dayNameIntl(new Date(dayDate.value), lang); }catch{ dayName.textContent='—'; } }
 function compute(){ const base=Math.round(parseFloat(stDaily.value||8)*60); const s=dayStart.value,e=dayEnd.value,br=parseInt(dayBreak.value||0,10); if(!s||!e){ dNet.textContent='0:00'; dOT.textContent='0:00'; return; } let sm=h2m(s), em=h2m(e); if(em<sm) em+=1440; const net=Math.max(0,(em-sm)-br); const ot=Math.max(0,net-base); dNet.textContent=m2h(net); dOT.textContent=m2h(ot); dBase.textContent=String(stDaily.value||8); }
 function notifySaved(){ const lang=getLang(); dSave.textContent = (I18N[lang].day.saved); setTimeout(()=> dSave.textContent='—', 1500); }
 function saveDayLocal(){ const p={date:dayDate.value,start:dayStart.value,end:dayEnd.value,break:parseInt(dayBreak.value||0,10)}; localStorage.setItem('day-'+p.date, JSON.stringify(p)); notifySaved(); }
@@ -289,11 +294,33 @@ doExport.addEventListener('click', ()=>{ if(expScope.value==='day'){ expFormat.v
 
 // Init
 function initApp(){
-  // language UI state
-  setActiveLangUI(currentLang);
-  // set today first
+  // 1) Today first so day-name works
   dayDate.value = new Date().toISOString().slice(0,10);
-  // i18n & values
+  // 2) Wire menu
+  if(menuToggle){
+    menuToggle.onclick=()=>{
+      const willOpen = !menuPanel.classList.contains('open');
+      menuPanel.classList.toggle('open', willOpen);
+      menuPanel.setAttribute('aria-hidden', String(!willOpen));
+    };
+    window.addEventListener('click', (e)=>{ if(!menuPanel.contains(e.target) && !menuToggle.contains(e.target)){ menuPanel.classList.remove('open'); menuPanel.setAttribute('aria-hidden','true'); }});
+  }
+  if(mnuDay)      mnuDay.onclick      = ()=>{ showCard(dayCard); menuPanel.classList.remove('open'); };
+  if(mnuSettings) mnuSettings.onclick = ()=>{ loadSettings(); showCard(settingsCard); menuPanel.classList.remove('open'); };
+  if(mnuMonth)    mnuMonth.onclick    = ()=>{ openMonth(); menuPanel.classList.remove('open'); };
+  if(mnuExport)   mnuExport.onclick   = ()=>{ openExport(); menuPanel.classList.remove('open'); };
+  // 3) Language flags
+  document.querySelectorAll('.btn-flag').forEach(btn=> btn.addEventListener('click', ()=>{ setLang(btn.dataset.lang); setActiveLangUI(btn.dataset.lang); }));
+  setActiveLangUI(currentLang);
+  // 4) Inputs
+  [dayStart,dayEnd,dayBreak].forEach(el=> el && el.addEventListener('input', (e)=>{ compute(); if(e && (e.target===dayEnd || e.target===dayBreak)){ saveDayLocal(); } }));
+  dayDate.addEventListener('change', ()=>{ updateDayName(); loadDay(); });
+  applySettings.addEventListener('click', ()=>{ saveSettings(); compute(); });
+  refreshMonth.addEventListener('click', refreshMonthSummary);
+  closeMonth.addEventListener('click', ()=> monthModal.classList.remove('open'));
+  closeExport.addEventListener('click', ()=> exportModal.classList.remove('open'));
+  doExport.addEventListener('click', ()=>{ if(expScope.value==='day'){ expFormat.value==='json'? exportDayJSON() : exportDayPNG(); } else { expFormat.value==='json'? exportMonthJSON() : exportMonthPNG(); } exportModal.classList.remove('open'); });
+  // 5) Apply language & compute
   setLang(currentLang);
   loadSettings();
   loadDay();
