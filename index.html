@@ -26,6 +26,11 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,"Noto 
   <div class="inner">
     <div class="brand">⏱️ <span id="brandTxt">ساعتي</span></div>
     <button id="menuToggle" class="btn-sm">☰ القائمة</button>
+    <div class="lang-flags">
+      <button class="btn-sm btn-flag" data-lang="ar" title="العربية">🇸🇦</button>
+      <button class="btn-sm btn-flag" data-lang="en" title="English">🇬🇧</button>
+      <button class="btn-sm btn-flag" data-lang="de" title="Deutsch">🇩🇪</button>
+    </div>
   </div>
 </div><!-- Collapsible Menu Panel --><div id="menuPanel" class="menu-panel" aria-hidden="true">
   <div class="menu-inner">
@@ -36,11 +41,6 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,"Noto 
       <button id="mnuExport" class="btn-sm">📦 تصدير</button>
     </div>
     <div class="menu-row">
-      <div class="lang-flags">
-        <button class="btn-sm btn-flag" data-lang="ar" title="العربية">🇸🇦</button>
-        <button class="btn-sm btn-flag" data-lang="en" title="English">🇬🇧</button>
-        <button class="btn-sm btn-flag" data-lang="de" title="Deutsch">🇩🇪</button>
-      </div>
       <button id="mnuTheme" class="btn-sm">Dark</button>
     </div>
   </div>
@@ -262,7 +262,11 @@ function exportMonthJSON(){ refreshMonthSummary(); const month=monthPick.value |
 // Navigation
 function showCard(card){ [dayCard, settingsCard].forEach(el=> el.style.display='none'); card.style.display='block'; }
 function openExport(){ exportModal.classList.add('open'); exportModal.setAttribute('aria-hidden','false'); }
-menuToggle.onclick=()=>{ const open = menuPanel.classList.toggle('open'); menuPanel.setAttribute('aria-hidden', String(!open)); };
+menuToggle.onclick=()=>{
+  const willOpen = !menuPanel.classList.contains('open');
+  menuPanel.classList.toggle('open', willOpen);
+  menuPanel.setAttribute('aria-hidden', String(!willOpen));
+}; menuPanel.setAttribute('aria-hidden', String(!open)); };
 
 mnuDay.onclick=()=>{ showCard(dayCard); menuPanel.classList.remove('open'); };
 mnuSettings.onclick=()=>{ loadSettings(); showCard(settingsCard); menuPanel.classList.remove('open'); };
